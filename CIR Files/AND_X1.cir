@@ -1,0 +1,75 @@
+AND_X1
+
+* Technology Dependent design rules/parameters
+.include /CMC/setups/ensc450/HSPICE/cmosp18/rules.inc
+* Wm#, Awd# parameters etc. all specified in the rules.inc file above
+
+* Transistor models 
+.protect
+.LIB `/CMC/setups/ensc450/HSPICE/cmosp18/log018.l' SS  $ typical process corner.
+.unprotect
+
+* WORST CASE SIMULATION
+
+* Supply Sources
+.param pwr=1.05 
+.temp 125
+Vvdd  vdd  0 dc pwr
+Vvdds vdds 0 dc pwr
+Vgnd  gnd  0 dc 0
+Vgnds gnds 0 dc 0
+
+* Logic 
+.param Wn=Wm#
+.param load=2fF
+.param ds=1
+Xpmosa vdd a z vdds pt_st w=ds*2*Wn
+Xpmosb vdd b z vdds pt_st w=ds*2*Wn
+Xnmosa c a z gnds nt_st w=ds*Wn
+Xnmosb gnd b c gnds nt_st w=ds*Wn
+
+Xpmosz vdd z f vdds pt_st w=ds*2*Wn
+Xnmosz gnd z f gnds nt_st w=ds*Wn
+
+Cload z 0 load
+
+* Input Stimuli (Step response)
+VA  a  0 PWL(0n pwr 5ns pwr 6ns pwr 11ns pwr 12ns pwr 17ns pwr 19ns pwr 23ns pwr 25ns pwr)
+VB  b  0 PWL(0n 0 5ns 0 6ns pwr 11ns pwr 12ns 0 17ns 0 19ns pwr 23ns pwr 25ns 0)
+
+* Simulation Parameters ************************
+.tran 0.01ps 30ns START=0 sweep load POI 2 2fF 10fF 
+
+.graph V(a)
+.graph V(b)
+.graph V(z)
+.graph V(f)
+.option post
+
+* Measure propogation delay from rising edge of input A to falling edge of output Z
+.meas tran tpdf_1ns      trig v(b) val='pwr*0.5' cross=2
++                        targ v(f) val='pwr*0.5' cross=2 
+.meas tran pdf_2ns       trig v(b) val='pwr*0.5' cross=4
++                        targ v(f) val='pwr*0.5' cross=4
+
+* Rise propogation delay
+.meas tran tpdr_1ns      trig v(b) val='pwr*0.5' cross=1
++                        targ v(f) val='pwr*0.5' cross=1 
+.meas tran tpdr_2ns      trig v(b) val='pwr*0.5' cross=3
++			 targ v(f) val='pwr*0.5' cross=3
+
+* Rise Time
+.meas tran ttr_1ns       trig v(f) val='pwr*0.2' rise=1
++                        targ v(f) val='pwr*0.8' rise=1
+.meas tran ttr_2ns       trig v(f) val='pwr*0.2' rise=2
++                        targ v(f) val='pwr*0.8' rise=2
+
+* Fall Time
+.meas tran ttf_1ns       trig v(f) val='pwr*0.8' fall=1
++                        targ v(f) val='pwr*0.2' fall=1
+.meas tran ttf_2ns       trig v(f) val='pwr*0.8' fall=2
++                        targ v(f) val='pwr*0.2' fall=2
+************************************************
+
+.end
+  

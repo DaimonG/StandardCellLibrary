@@ -1,0 +1,71 @@
+NOR_X1
+
+* Technology Dependent design rules/parameters
+.include /CMC/setups/ensc450/HSPICE/cmosp18/rules.inc
+* Wm#, Awd# parameters etc. all specified in the rules.inc file above
+
+* Transistor models 
+.protect
+.LIB `/CMC/setups/ensc450/HSPICE/cmosp18/log018.l' SS  $ typical process corner.
+.unprotect
+* WORST CASE SIMULATION
+
+* Supply Sources
+.param pwr=1.05 
+.temp 125
+Vvdd  vdd  0 dc pwr
+Vvdds vdds 0 dc pwr
+Vgnd  gnd  0 dc 0
+Vgnds gnds 0 dc 0
+
+* Logic 
+.param Wn=Wm#
+.param load=2fF
+.param ds=1
+Xpmosa vdd a c vdds pt_st w=ds*2*Wn
+Xpmosb c b z vdds pt_st w=ds*2*Wn
+Xnmosa gnd a z gnds nt_st w=ds*Wn
+Xnmosb gnd b z gnds nt_st w=ds*Wn
+
+Cload z 0 load
+
+* Input Stimuli (Step response)
+VB  b  0 PWL(0n 0 5ns 0 6ns 0 11ns 0 12ns 0 17ns 0 19ns 0 23ns 0)
+VA  a  0 PWL(0n pwr 3ns pwr 4ns 0 8ns 0  9ns pwr 13ns pwr 15ns 0 19ns 0 21ns pwr 23ns pwr)
+
+* Simulation Parameters ************************ 
+.tran 0.01ps 25ns START=0 sweep load POI 2 2fF 10fF 
+
+.graph V(a)
+.graph V(b)
+.graph V(z)
+.option post
+
+* Measure propogation delay from rising edge of input A to falling edge of output Z
+.meas tran tpdf_1ns      trig v(a) val='pwr*0.5' cross=2
++                        targ v(z) val='pwr*0.5' cross=2 
+.meas tran tpdf_2ns      trig v(a) val='pwr*0.5' cross=4
++                        targ v(z) val='pwr*0.5' cross=4
+
+* Rise propogation delay
+.meas tran tpdr_1ns      trig v(a) val='pwr*0.5' cross=1
++                        targ v(z) val='pwr*0.5' cross=1 
+.meas tran tpdr_2ns      trig v(a) val='pwr*0.5' cross=3
++			 targ v(z) val='pwr*0.5' cross=3
+
+* Rise Time
+.meas tran ttr_1ns       trig v(z) val='pwr*0.2' rise=1
++                        targ v(z) val='pwr*0.8' rise=1
+.meas tran ttr_2ns       trig v(z) val='pwr*0.2' rise=2
++                        targ v(z) val='pwr*0.8' rise=2
+
+* Fall Time
+.meas tran ttf_1ns       trig v(z) val='pwr*0.8' fall=1
++                        targ v(z) val='pwr*0.2' fall=1
+.meas tran ttf_2ns       trig v(z) val='pwr*0.8' fall=2
++                        targ v(z) val='pwr*0.2' fall=2
+
+************************************************
+
+.end
+  
